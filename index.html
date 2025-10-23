@@ -3,19 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mini Calc + Notes</title>
+<title>Mini Calc + Sticky</title>
 <style>
   body {
     margin: 0;
     height: 100vh;
-    background: linear-gradient(to bottom right, #a8c0ff, #3f2b96);
-    font-family: Arial, sans-serif;
+    background: linear-gradient(to bottom right, #b3cdd1, #9fa4c4);
+    font-family: "Segoe UI", sans-serif;
     overflow: hidden;
   }
 
   .window {
     position: absolute;
-    background: #fefefe;
     border-radius: 8px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     padding: 15px;
@@ -26,12 +25,15 @@
   #calc {
     top: 80px;
     left: 100px;
+    background: #ffffff;
   }
 
   #note {
     top: 100px;
     left: 380px;
     background: #fff8b3;
+    resize: none;
+    overflow: hidden;
   }
 
   input[type="text"] {
@@ -72,9 +74,50 @@
     font-size: 16px;
     outline: none;
   }
+
+  /* Settings icon */
+  #settings {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 28px;
+    height: 28px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  #settings:hover {
+    background: #eee;
+  }
+
+  #settings::before {
+    content: "⚙️";
+    font-size: 16px;
+  }
+
+  #resizeToggle {
+    position: absolute;
+    top: 50px;
+    right: 20px;
+    background: #fff;
+    padding: 8px 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    display: none;
+    font-size: 14px;
+  }
 </style>
 </head>
 <body>
+
+<div id="settings"></div>
+<div id="resizeToggle">Sticky Resize: <span id="resizeStatus">OFF</span></div>
 
 <div id="calc" class="window">
   <input type="text" id="display" disabled>
@@ -109,6 +152,13 @@
 
 <script>
   const display = document.getElementById('display');
+  const note = document.getElementById('note');
+  const settings = document.getElementById('settings');
+  const resizeToggle = document.getElementById('resizeToggle');
+  const resizeStatus = document.getElementById('resizeStatus');
+
+  let resizeEnabled = false;
+
   function append(value) {
     display.value += value;
   }
@@ -120,10 +170,25 @@
     catch { display.value = 'Error'; }
   }
 
-  // Drag Functionality
+  // Keyboard support
+  document.addEventListener('keydown', function(e) {
+    const key = e.key;
+    if (!isNaN(key) || ['+', '-', '*', '/', '.'].includes(key)) {
+      append(key);
+    } else if (key === 'Enter' || key === '=') {
+      calculate();
+    } else if (key === 'Backspace') {
+      display.value = display.value.slice(0, -1);
+    } else if (key.toLowerCase() === 'c') {
+      clearDisplay();
+    }
+  });
+
+  // Drag functionality
   document.querySelectorAll('.window').forEach(el => {
     let offsetX, offsetY, isDown = false;
     el.addEventListener('mousedown', e => {
+      if (e.target.tagName === 'TEXTAREA') return;
       isDown = true;
       offsetX = e.clientX - el.offsetLeft;
       offsetY = e.clientY - el.offsetTop;
@@ -136,6 +201,19 @@
         el.style.top = e.clientY - offsetY + 'px';
       }
     });
+  });
+
+  // Settings menu toggle
+  settings.addEventListener('click', () => {
+    resizeToggle.style.display = resizeToggle.style.display === 'none' ? 'block' : 'none';
+  });
+
+  // Enable/disable sticky resize
+  resizeToggle.addEventListener('click', () => {
+    resizeEnabled = !resizeEnabled;
+    note.style.resize = resizeEnabled ? 'vertical' : 'none';
+    resizeStatus.textContent = resizeEnabled ? 'ON' : 'OFF';
+    resizeStatus.style.color = resizeEnabled ? 'green' : 'red';
   });
 </script>
 
